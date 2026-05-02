@@ -50,7 +50,7 @@ public class LocationController(
     public async Task<ActionResult<AnalyzeResponse>> Analyze([FromBody] AnalyzeRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Address))
-            return BadRequest("Address is required.");
+            return BadRequest(new { error = "Address is required." });
 
         if (request.RadiusMeters is < 100 or > 5000)
             request.RadiusMeters = 1000;

@@ -39,6 +39,7 @@
           :api-key="googleMapsKey"
           :places="result.places"
         />
+        <p v-else class="map-fallback">Map is hidden until you set <code>VITE_GOOGLE_MAPS_KEY</code> on Vercel (browser key; separate from the server key on Railway).</p>
 
         <ScoreDisplay
           :score="result.score"
@@ -81,6 +82,14 @@ const inputRef     = ref(null)
 
 const googleMapsKey = import.meta.env.VITE_GOOGLE_MAPS_KEY ?? ''
 
+function apiErrorMessage(err) {
+  const d = err.response?.data
+  if (typeof d === 'string') return d
+  if (d && typeof d === 'object' && d.error) return String(d.error)
+  if (d && typeof d === 'object' && d.title) return String(d.title)
+  return err.message ?? 'Something went wrong.'
+}
+
 async function handleAnalyze({ address, radius }) {
   analyzing.value    = true
   analyzeError.value = ''
@@ -89,8 +98,7 @@ async function handleAnalyze({ address, radius }) {
   try {
     result.value = await analyzeLocation(address, radius)
   } catch (err) {
-    analyzeError.value =
-      err.response?.data?.error ?? err.message ?? 'Something went wrong.'
+    analyzeError.value = apiErrorMessage(err)
     result.value = null
   } finally {
     analyzing.value = false
@@ -111,7 +119,7 @@ async function handleAiRequest() {
       result.value.score,
     )
   } catch (err) {
-    aiSummary.value = 'AI summary unavailable: ' + (err.message ?? 'Unknown error')
+    aiSummary.value = 'AI summary unavailable: ' + apiErrorMessage(err)
   } finally {
     aiLoading.value = false
   }
@@ -159,5 +167,16 @@ async function handleAiRequest() {
   color: var(--danger);
   margin-top: 0.5rem;
   font-size: 0.88rem;
+}
+
+.map-fallback {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+  line-height: 1.45;
+}
+
+.map-fallback code {
+  font-size: 0.82rem;
 }
 </style>

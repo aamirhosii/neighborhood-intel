@@ -1,8 +1,13 @@
 import axios from 'axios'
 
-// Dev: Vite proxies /api → backend. Production (e.g. Vercel): set VITE_API_BASE_URL to your API origin (no trailing slash).
+// Dev: Vite proxies /api → backend. Production (e.g. Vercel): set VITE_API_BASE_URL to your API origin (https://…, no trailing slash).
+function normalizeApiOrigin(raw) {
+  const trimmed = String(raw).trim().replace(/\/$/, '')
+  if (!trimmed) return ''
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
 const baseURL = import.meta.env.VITE_API_BASE_URL
-  ? `${import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '')}/api`
+  ? `${normalizeApiOrigin(import.meta.env.VITE_API_BASE_URL)}/api`
   : '/api'
 
 const http = axios.create({ baseURL })
