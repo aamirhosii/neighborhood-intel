@@ -159,7 +159,7 @@ Open `http://localhost:5173`.
 
 ## Deployment
 
-See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for: creating a public GitHub repo, Vercel (frontend), and hosting the ASP.NET API (Railway, Azure, Render, etc.) with CORS and env vars.
+See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for Vercel + overview, and **[docs/RAILWAY.md](docs/RAILWAY.md)** to deploy the API from the same GitHub repo (Root Directory **`backend`**).
 
 ---
 

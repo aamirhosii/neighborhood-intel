@@ -74,7 +74,7 @@ Redeploy after changing variables.
 
 Pick one:
 
-- **[Railway](https://railway.app/)** — connect repo or deploy from Dockerfile; set `PORT` if needed; add env vars for keys.
+- **[Railway](https://railway.app/)** — step-by-step for this repo: **[docs/RAILWAY.md](RAILWAY.md)** (GitHub → Root Directory `backend` → env vars → public URL for `VITE_API_BASE_URL`).
 - **[Azure App Service](https://azure.microsoft.com/products/app-service/)** — .NET 8 runtime; configure CORS + application settings.
 - **[Render](https://render.com/)** — Web service with `dotnet publish` start command.
 

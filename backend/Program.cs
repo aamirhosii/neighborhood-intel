@@ -2,6 +2,11 @@ using NeighborhoodIntel.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Railway (and similar hosts) assign a dynamic PORT; bind explicitly so Kestrel listens publicly.
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+    builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
 builder.Services.AddControllers();
 builder.Services.AddHttpClient<GeocodingService>();
 builder.Services.AddHttpClient<PlacesService>();

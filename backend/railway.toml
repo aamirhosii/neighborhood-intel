@@ -1,0 +1,10 @@
+# Config-as-code for Railway. Set the service **Root Directory** to `backend` in the Railway UI
+# so this file and the Dockerfile are the build context root.
+# https://docs.railway.app/guides/config-as-code
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
