@@ -46,13 +46,16 @@ git push -u origin main
 
 ## 2. Connect Vercel
 
-1. Log in at [vercel.com](https://vercel.com) and **Add New… → Project**.
-2. **Import** your `neighborhood-intel` GitHub repository.
-3. Configure the project:
-   - **Root Directory:** `frontend`
-   - **Framework Preset:** Vite (auto-detected)
-   - **Build Command:** `npm run build` (default)
-   - **Output Directory:** `dist` (default for Vite)
+This repo includes a **root `vercel.json`** so Git-based builds work from the monorepo (`install` / `build` / `output` run under `frontend/`). You can still set **Root Directory** to `frontend` in the Vercel dashboard instead if you prefer; then you may remove the root `vercel.json`.
+
+### This project’s production URLs (example team)
+
+After the first production deploy, Vercel assigns aliases such as:
+
+- `https://neighborhood-intel-amirs-projects-74ab5506.vercel.app`
+- `https://neighborhood-intel-pied.vercel.app` (if you added that alias)
+
+The slug `neighborhood-intel.vercel.app` may belong to **another** Vercel account globally — use your team URL or add a **custom domain** under Project → Settings → Domains.
 
 ### Environment variables on Vercel
 

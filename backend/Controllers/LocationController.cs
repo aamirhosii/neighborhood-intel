@@ -29,6 +29,10 @@ public class LocationController(
         var response = await http.GetStringAsync(url);
         var doc      = JsonDocument.Parse(response);
 
+        var status = doc.RootElement.TryGetProperty("status", out var s) ? s.GetString() : "unknown";
+        if (status != "OK" && status != "ZERO_RESULTS")
+            return StatusCode(500, new { error = $"Google Autocomplete API error: {status}" });
+
         var predictions = doc.RootElement
             .GetProperty("predictions")
             .EnumerateArray()

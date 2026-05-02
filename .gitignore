@@ -26,3 +26,6 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+# Vercel (local link; never commit tokens)
+.vercel/

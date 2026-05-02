@@ -6,6 +6,16 @@
 
 ---
 
+## Live demo (Vercel)
+
+Production build (set **`VITE_API_BASE_URL`** on Vercel and CORS on your API for full analyze + AI flows):
+
+- **https://neighborhood-intel-amirs-projects-74ab5506.vercel.app**
+
+The global slug `neighborhood-intel.vercel.app` may point to a different project; use your team URL or a custom domain.
+
+---
+
 ## Why this project
 
 | | |
