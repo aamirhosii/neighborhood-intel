@@ -30,12 +30,16 @@ In the service → **Variables**, add:
 
 | Name | Value |
 |------|--------|
-| `GoogleMaps__ApiKey` | Your Google Maps key (Geocoding + Places enabled) |
-| `OpenAI__ApiKey` | Your OpenAI API key |
-| `Cors__AllowedOrigins__0` | Your Vercel site, e.g. `https://neighborhood-intel-amirs-projects-74ab5506.vercel.app` |
-| `Cors__AllowedOrigins__1` | `http://localhost:5173` (optional, for local dev against prod API) |
+| `GoogleMaps__ApiKey` | Google key (Geocoding + Places enabled). Use **double** underscore: `GoogleMaps__ApiKey`. |
+| `OpenAI__ApiKey` | OpenAI API key (`OpenAI__ApiKey`). |
+| `CORS_ALLOWED_ORIGINS` | Your **production** Vercel origin, e.g. `https://your-app.vercel.app` — **https**, **no trailing slash**. Comma-separate multiple origins. |
 
-Add more `Cors__AllowedOrigins__2`, `__3`, … if you use extra domains.
+Optional:
+
+| Name | Value |
+|------|--------|
+| `Cors__AllowedOrigins__0`, `__1`, … | Alternative to `CORS_ALLOWED_ORIGINS`: ASP.NET style indexed env vars (see `appsettings.json`). |
+| `CORS_ALLOW_VERCEL_PREVIEWS` | `true` or `false` — overrides preview behavior. If **unset**, any `vercel.app` origin in `CORS_ALLOWED_ORIGINS` also allows **preview** `https://*.vercel.app` URLs (see `Program.cs`). |
 
 **Do not** commit real keys; set them only in Railway.
 
@@ -65,5 +69,5 @@ You should get JSON with `counts`, `score`, and `address`.
 ## Troubleshooting
 
 - **502 / never becomes healthy:** Confirm the app listens on **`PORT`**. This repo sets `UseUrls` from `PORT` in `Program.cs` for Railway.
-- **CORS errors in the browser:** Add your exact Vercel origin (scheme + host, no path) to `Cors__AllowedOrigins__*`.
+- **CORS errors in the browser:** Use **`CORS_ALLOWED_ORIGINS`** with the **exact** frontend origin (`https://…`, no path, no trailing slash). Preview deploys use different `*.vercel.app` hostnames than production — either include a production `vercel.app` URL in `CORS_ALLOWED_ORIGINS` (this repo then allows preview subdomains) or set `CORS_ALLOW_VERCEL_PREVIEWS=true`.
 - **Google / OpenAI errors:** Check API billing, enabled APIs (Geocoding, Places), and that keys are not restricted in a way that blocks Railway’s egress IPs (or use unrestricted server keys with rotation).

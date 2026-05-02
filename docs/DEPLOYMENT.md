@@ -82,18 +82,13 @@ Set these on the host:
 
 - `GoogleMaps__ApiKey`
 - `OpenAI__ApiKey`
-- `Cors__AllowedOrigins__0` = `https://your-app.vercel.app`  
-  (or use JSON / array format your host supports — equivalent to `Cors:AllowedOrigins` in appsettings)
+- `CORS_ALLOWED_ORIGINS` = `https://your-app.vercel.app` (comma-separated; **https**, no trailing slash) — see `Program.cs`
 
-Alternatively, set `Cors:AllowedOrigins` as a JSON array in configuration if your provider supports nested config.
+You can also use `Cors__AllowedOrigins__0`, `__1`, … or `Cors:AllowedOrigins` in appsettings-style config if your host prefers that.
 
 ### CORS
 
-The API must allow your Vercel origin, for example:
-
-`https://neighborhood-intel.vercel.app`
-
-Add it to `Cors:AllowedOrigins` in `appsettings.json` on the server or via environment/configuration in your host’s dashboard.
+The API must respond with `Access-Control-Allow-Origin` for your **exact** frontend origin(s). This repo reads **`CORS_ALLOWED_ORIGINS`** plus `Cors:AllowedOrigins` from config and supports **Vercel preview** URLs when a `vercel.app` production origin is listed (details in **README** and **docs/RAILWAY.md**).
 
 ---
 

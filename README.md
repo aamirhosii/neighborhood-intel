@@ -1,18 +1,19 @@
 # NeighborhoodIntel
 
-**Block-level location intelligence for real estate** — geocode an address, pull live amenity counts from Google Places, score the area in C#, and optionally generate a buyer-focused narrative with OpenAI.
+**Neighborhood intelligence for real estate** — enter an address, get live amenity counts from Google Places, a transparent **C#** neighborhood score, an optional **OpenAI** buyer-style summary, and an optional **Google Maps** embed in the browser.
 
-> I wanted to build something that reflects how agents evaluate locations, so I created a location intelligence tool that combines real-world data from APIs with AI-generated insights to help assess neighborhoods quickly.
+> Combines real API data with a small scoring model and optional AI narrative so you can compare locations quickly.
 
 ---
 
-## Live demo (Vercel)
+## Live demo
 
-Production build (set **`VITE_API_BASE_URL`** on Vercel and CORS on your API for full analyze + AI flows):
+Deploy your own **Vue** frontend on **Vercel** and **ASP.NET Core** API on **Railway** (or any .NET host). Example production URL shape:
 
-- **https://neighborhood-intel-amirs-projects-74ab5506.vercel.app**
+- **Frontend:** `https://<your-project>.vercel.app`
+- **API:** `https://<your-service>.up.railway.app`
 
-The global slug `neighborhood-intel.vercel.app` may point to a different project; use your team URL or a custom domain.
+Set **`VITE_API_BASE_URL`** on Vercel to the API origin (with `https://`, no trailing slash) and configure **CORS** on the API (see [Environment variables](#environment-variables)). Redeploy the frontend after changing `VITE_*` vars.
 
 ---
 
@@ -20,20 +21,20 @@ The global slug `neighborhood-intel.vercel.app` may point to a different project
 
 | | |
 |---|---|
-| **Real APIs** | Google Geocoding + Places (Nearby Search) |
-| **Real logic** | Weighted scoring and normalization in C#, not CRUD-only |
-| **AI that matters** | Short advisor-style summary from structured counts + score |
-| **Modern UI** | Vue 3 + Vite dashboard with map embed and saved searches |
+| **Real APIs** | Google Geocoding, Places (Nearby Search, Autocomplete) |
+| **Real logic** | Weighted scoring and caps in `ScoringService.cs` (0–100 + labels) |
+| **AI** | Short advisor-style summary from counts + score (`gpt-4o-mini` via OpenAI SDK) |
+| **Modern UI** | Vue 3 + Vite: search, suggestions, stats, score, AI panel, optional map |
 
 ---
 
 ## Features
 
-1. **Address input** — natural language (e.g. `123 King St Toronto`); backend resolves coordinates via Geocoding API.
-2. **Nearby places** — schools, grocery, parks, transit, restaurants within a selectable radius (500 m / 1 km / custom).
-3. **Neighborhood score** — e.g. `Neighborhood Score: 78/100` from a transparent weighted formula in `ScoringService.cs`.
-4. **AI summary** — “Analyze Location” calls the API with counts + score; GPT-4o-mini returns a concise evaluation for buyers.
-5. **Vue dashboard** — address bar, stat cards, score gauge, AI panel, optional Google Map embed.
+1. **Address search** — natural language (e.g. `123 King St, Toronto`); **live suggestions** via `GET /api/autocomplete` (server-side Google Places).
+2. **Analyze** — `POST /api/analyze-location` geocodes the address, loads nearby **schools, parks, grocery, transit, restaurants** within **500 m / 1 km / 2 km**.
+3. **Neighborhood score** — weighted formula in C# (e.g. Poor → Excellent); see `ScoringService.cs`.
+4. **AI summary** — optional “explain this neighborhood” using structured counts + score (`POST /api/ai-summary`).
+5. **Map embed** — optional; requires **`VITE_GOOGLE_MAPS_KEY`** on the frontend (Maps JavaScript API in the browser). Server-side calls use **`GoogleMaps__ApiKey`** on the API host.
 
 ---
 
@@ -41,20 +42,21 @@ The global slug `neighborhood-intel.vercel.app` may point to a different project
 
 ```mermaid
 flowchart LR
-  subgraph client [Vue + Vite]
-    UI[Dashboard]
+  subgraph vercel [Vercel]
+    UI[Vue 3 + Vite SPA]
   end
-  subgraph api [ASP.NET Core 8]
+  subgraph host [.NET host e.g. Railway]
+    API[ASP.NET Core 8]
     GEO[GeocodingService]
     PL[PlacesService]
     SC[ScoringService]
     AI[AiSummaryService]
   end
-  subgraph external [External APIs]
+  subgraph external [External]
     GM[Google Maps APIs]
     OA[OpenAI API]
   end
-  UI -->|REST /api| api
+  UI -->|HTTPS /api| API
   GEO --> GM
   PL --> GM
   AI --> OA
@@ -64,8 +66,10 @@ flowchart LR
 |--------|------|
 | Frontend | Vue 3, Vite, Axios |
 | Backend | ASP.NET Core 8 Web API |
-| Maps | Geocoding, Places (Nearby), optional Maps JS embed |
-| LLM | OpenAI Chat Completions (`gpt-4o-mini`) |
+| Maps | Geocoding, Places (Nearby + Autocomplete), optional Maps JS (browser key) |
+| LLM | OpenAI Chat (`gpt-4o-mini`) |
+
+**Split hosting:** the SPA and API use **different origins**, so the API must send **CORS** headers for your Vercel URL(s). Preview deploys use random `*.vercel.app` hostnames; this repo can allow those when your configured origins include a `vercel.app` production URL (see `Program.cs`).
 
 ---
 
@@ -73,34 +77,37 @@ flowchart LR
 
 ```
 neighborhood-intel/
-├── backend/                 # ASP.NET Core API
-│   ├── Controllers/         # POST /api/analyze-location, /api/ai-summary, GET /api/autocomplete
+├── backend/                 # ASP.NET Core API (Docker / Railway root = backend)
+│   ├── Controllers/         # /api/analyze-location, /api/ai-summary, /api/autocomplete
 │   ├── Services/
 │   └── Models/
-├── frontend/                # Vue SPA (deploy this folder to Vercel)
-└── docs/
-    └── DEPLOYMENT.md        # GitHub + Vercel + API hosting
+├── frontend/                # Vue SPA (Vercel build uses root vercel.json)
+├── docs/
+│   ├── DEPLOYMENT.md
+│   └── RAILWAY.md
+├── vercel.json              # Root: install/build frontend, output frontend/dist
+└── README.md
 ```
 
 ---
 
 ## API reference
 
-Base path: `/api` (Vite dev server proxies `http://localhost:5173/api` → `http://localhost:5000/api`).
+**Local dev:** Vite proxies `http://localhost:5173/api` → `http://localhost:5000/api` (see `frontend/vite.config.js`).
+
+**Production:** set `VITE_API_BASE_URL` to the API origin; Axios uses `{origin}/api`.
 
 | Method | Path | Body / query | Response highlights |
 |--------|------|----------------|----------------------|
-| `POST` | `/api/analyze-location` | `{ "address": string, "radiusMeters": number }` | `counts`, `score`, `scoreLabel`, `latitude`, `longitude`, `address` |
+| `POST` | `/api/analyze-location` | `{ "address": string, "radiusMeters": number }` | `counts`, `score`, `scoreLabel`, `latitude`, `longitude`, `address`, `places` |
 | `POST` | `/api/ai-summary` | `{ "address", "counts", "score" }` | `{ "summary": string }` |
-| `GET` | `/api/autocomplete` | `?input=` | Google Places address predictions |
-
-Raw Places payloads can be extended in `PlacesService` / response DTOs if you want to expose them for debugging.
+| `GET` | `/api/autocomplete` | `?input=` | `{ "predictions": [...] }` |
 
 ---
 
 ## Scoring (C#)
 
-Caps per category, weighted sum, normalized to **0–100**. See `backend/Services/ScoringService.cs` for the exact formula and labels (Poor → Excellent).
+Caps per category, weighted sum, normalized to **0–100**. Labels: Poor → Below Average → Average → Good → Excellent. See `backend/Services/ScoringService.cs`.
 
 ---
 
@@ -110,8 +117,8 @@ Caps per category, weighted sum, normalized to **0–100**. See `backend/Service
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download)
 - Node 18+ and npm
-- Google Cloud project with **Geocoding**, **Places**, and (for autocomplete / map) **Places API** / Maps JS enabled
-- [OpenAI API key](https://platform.openai.com/api-keys)
+- Google Cloud: **Geocoding API**, **Places API** (Nearby, Autocomplete, etc.)
+- [OpenAI API key](https://platform.openai.com/api-keys) (optional for AI summary)
 
 ### Backend
 
@@ -122,7 +129,7 @@ copy appsettings.Development.example.json appsettings.Development.json
 dotnet run
 ```
 
-Runs at `http://localhost:5000` by default. You can also use environment variables `GoogleMaps__ApiKey` and `OpenAI__ApiKey`.
+Listens on `http://localhost:5000` by default. Or use env vars `GoogleMaps__ApiKey` and `OpenAI__ApiKey`.
 
 ### Frontend
 
@@ -130,7 +137,7 @@ Runs at `http://localhost:5000` by default. You can also use environment variabl
 cd frontend
 npm install
 copy .env.example .env
-# Optional: VITE_GOOGLE_MAPS_KEY for the embed
+# Optional: VITE_GOOGLE_MAPS_KEY for the map widget
 npm run dev
 ```
 
@@ -140,32 +147,43 @@ Open `http://localhost:5173`.
 
 ## Environment variables
 
-### Backend (`appsettings` or env)
+### Backend (`appsettings`, User Secrets, or host env)
 
 | Key | Purpose |
 |-----|---------|
-| `GoogleMaps:ApiKey` | Geocoding, Places Nearby, autocomplete |
-| `OpenAI:ApiKey` | AI neighborhood summary |
-| `Cors:AllowedOrigins` | JSON array of allowed browser origins (add your Vercel URL) |
+| `GoogleMaps__ApiKey` | Server: Geocoding, Places Nearby, Autocomplete |
+| `OpenAI__ApiKey` | AI summary |
+| `Cors:AllowedOrigins` | Array in JSON config (local dev defaults include localhost) |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated browser origins (e.g. `https://myapp.vercel.app`) — **no trailing slash** |
+| `CORS_ALLOW_VERCEL_PREVIEWS` | Optional: `true` / `false` / omit — overrides auto `*.vercel.app` preview behavior (see `Program.cs`) |
+| `PORT` | Set by PaaS (e.g. Railway); Kestrel binds to it |
 
-### Frontend (`.env` / Vercel)
+### Frontend (`.env` locally, **Vercel** project settings in production)
 
 | Key | Purpose |
 |-----|---------|
-| `VITE_GOOGLE_MAPS_KEY` | Map iframe / JS (optional) |
-| `VITE_API_BASE_URL` | **Production only** — origin of the .NET API, no trailing slash (e.g. `https://api.yourdomain.com`). Omit locally so `/api` uses the Vite proxy. |
+| `VITE_API_BASE_URL` | **Production:** full API origin with `https://`, no trailing slash, **no** `/api` suffix. Omit locally to use Vite proxy. |
+| `VITE_GOOGLE_MAPS_KEY` | **Optional:** browser Maps JS API key for the embed (separate restrictions from server key). |
 
 ---
 
 ## Deployment
 
-See **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** for Vercel + overview, and **[docs/RAILWAY.md](docs/RAILWAY.md)** to deploy the API from the same GitHub repo (Root Directory **`backend`**).
+- **[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)** — GitHub + Vercel overview  
+- **[docs/RAILWAY.md](docs/RAILWAY.md)** — API on Railway (`backend` root directory, Docker)
 
 ---
 
-## Suggested GitHub repository name
+## GitHub repository “About” (copy-paste)
 
-Slug: **`neighborhood-intel`** — short, searchable, matches the product name **NeighborhoodIntel**.
+Set in the repo **⚙ Settings → General → Repository details** (or the **About** cog on the repo home):
+
+**Description (short):**
+
+> Vue 3 + ASP.NET Core 8: address autocomplete, Google Places amenity counts, C# neighborhood score, optional OpenAI summary, optional Maps embed.
+
+**Topics (suggestions):**  
+`vue` `vite` `aspnet-core` `csharp` `dotnet` `google-maps` `google-places` `openai` `real-estate` `vercel` `railway`
 
 ---
 
