@@ -37,11 +37,20 @@ if (!string.IsNullOrWhiteSpace(corsExtra))
     }
 }
 
-// Set CORS_ALLOW_VERCEL_PREVIEWS=true on Railway to allow any https://*.vercel.app origin (preview deploys).
-var allowVercelPreview = string.Equals(
-    Environment.GetEnvironmentVariable("CORS_ALLOW_VERCEL_PREVIEWS"),
-    "true",
-    StringComparison.OrdinalIgnoreCase);
+// Allow https://*.vercel.app for preview deploys when any configured origin is on vercel.app (unless CORS_ALLOW_VERCEL_PREVIEWS=false).
+// Set CORS_ALLOW_VERCEL_PREVIEWS=true to force on; false to force off (production vercel only, exact origins).
+var previewOverride = Environment.GetEnvironmentVariable("CORS_ALLOW_VERCEL_PREVIEWS");
+bool allowVercelPreview;
+if (string.Equals(previewOverride, "false", StringComparison.OrdinalIgnoreCase))
+    allowVercelPreview = false;
+else if (string.Equals(previewOverride, "true", StringComparison.OrdinalIgnoreCase))
+    allowVercelPreview = true;
+else
+{
+    allowVercelPreview = corsOrigins.Any(static o =>
+        Uri.TryCreate(o, UriKind.Absolute, out var u)
+        && u.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase));
+}
 
 var allowedExact = new HashSet<string>(corsOrigins, StringComparer.Ordinal);
 
